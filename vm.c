@@ -72,6 +72,17 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
 // Create PTEs for virtual addresses starting at va that refer to
 // physical addresses starting at pa. va and size might not
 // be page-aligned.
+
+/**
+ * 
+ * 在给定的页目录pgdir里初始化给定虚拟地址[va, va+size]的页表项。映射给物理地址[pa, pa+size]
+ * @pgdir: 页目录
+ * @va: 虚拟起始地址
+ * @size: 总长度
+ * @pa: 物理地址
+ * @return 0 success
+ * 
+*/
 static int
 mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
 {
@@ -80,6 +91,7 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
 
   a = (char*)PGROUNDDOWN((uint)va);
   last = (char*)PGROUNDDOWN(((uint)va) + size - 1);
+  //walkpgdir的作用是将给定的虚拟地址挂到pgdir的各个目录项里。所以这里是在初始化各个虚拟地址。
   for(;;){
     if((pte = walkpgdir(pgdir, a, 1)) == 0)
       return -1;
