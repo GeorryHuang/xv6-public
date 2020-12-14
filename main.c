@@ -17,7 +17,16 @@ extern char end[]; // first address after kernel loaded from ELF file
 int
 main(void)
 {
+  //end指向一个虚拟地址，这个地址是内核装载ELF后，后面的起始地址。P2V是将物理地址转虚拟地址。
+  /*
+  - ELF -
+  - end -
+  - ... -
+  - 0x80000000 - 
+  - 0x80000000 + 4* 1024 * 1024 -
+  */
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
+  
   kvmalloc();      // kernel page table
   mpinit();        // detect other processors
   lapicinit();     // interrupt controller
