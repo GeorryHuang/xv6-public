@@ -71,7 +71,7 @@ struct segdesc {
 //  \--- PDX(va) --/ \--- PTX(va) --/
 
 // page directory index
-#define PDX(va)         (((uint)(va) >> PDXSHIFT) & 0x3FF)
+#define PDX(va)         (((uint)(va) >> PDXSHIFT) & 0x3FF) //0x3FF(16) = 1023(10) = 11 1111 1111(2)
 
 // page table index
 #define PTX(va)         (((uint)(va) >> PTXSHIFT) & 0x3FF)
@@ -87,6 +87,10 @@ struct segdesc {
 #define PTXSHIFT        12      // offset of PTX in a linear address
 #define PDXSHIFT        22      // offset of PDX in a linear address
 
+/*给page对齐用的，举个例子：PGSIZE=4096，那么,如果入参是4220，
+PGROUNDUP(4220) == 8196
+PGROUNDDOWN(4220) == 4096
+*/
 #define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
 #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))
 
