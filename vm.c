@@ -46,14 +46,15 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
   pde_t *pde;
   pte_t *pgtab;
 
-  //1. 根据虚拟地址钟的页目录项下标。得到目录项
+  //1. 根据虚拟地址中的页目录项下标。得到目录项（目录项指向一个页表，这里存的是页表的物理地址）
   pde = &pgdir[PDX(va)];
 
   if(*pde & PTE_P){
-    //2. 根据目录项中的地址。找到页表
+    //2. 根据目录项中的页表物理地址，转换为虚拟地址后，得到页表。
     pgtab = (pte_t*)P2V(PTE_ADDR(*pde));
   } else {
     //一个目录项指向一个页表，如果页表不存在，就用kalloc创建一个页表。
+    //这个地方很诡异，kalloc返回的是一个物理地址，被当成虚拟地址使用？？？
     if(!alloc || (pgtab = (pte_t*)kalloc()) == 0)
       return 0;
     // Make sure all those PTE_P bits are zero.
@@ -62,7 +63,7 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
     // The permissions here are overly generous, but they can
     // be further restricted by the permissions in the page table
     // entries, if necessary.
-    //初始化这个页目录项，让它指向页表。
+    //初始化这个页目录项，让它指向页表。（这里pgtab可以直接赋值给pde，说明它的地址完美的压在了虚拟地址上？怎么做到的？）
     *pde = V2P(pgtab) | PTE_P | PTE_W | PTE_U;
   }
   //3. 从页表中取出页的地址
@@ -142,6 +143,7 @@ static struct kmap {
 };
 
 // Set up kernel part of a page table.
+//将kmap四个部分的虚拟地址映射给物理地址。挂到页目录里。
 pde_t*
 setupkvm(void)
 {
