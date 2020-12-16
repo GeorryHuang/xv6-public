@@ -69,6 +69,9 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
 // Create PTEs for virtual addresses starting at va that refer to
 // physical addresses starting at pa. va and size might not
 // be page-aligned.
+/**
+ * 给定的虚拟地址映射到物理地址上，映射关系保存在pgdir，也就是页目录里
+*/
 static int
 mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
 {
@@ -82,6 +85,7 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
       return -1;
     if(*pte & PTE_P)
       panic("remap");
+    //页表的搞20位保存物理地址。低12位保存flag。
     *pte = pa | perm | PTE_P;
     if(a == last)
       break;
@@ -127,17 +131,22 @@ static struct kmap {
 };
 
 // Set up kernel part of a page table.
+/**
+ * 用kalloc分配一个虚拟页，该页用于一个页目录，然后将kmap里的所有虚拟地址映射到这个页目录上。
+*/
 pde_t*
 setupkvm(void)
 {
   pde_t *pgdir;
   struct kmap *k;
 
+  //一个目录项大小是一个页，可以寻址4GB的空间
   if((pgdir = (pde_t*)kalloc()) == 0)
     return 0;
   memset(pgdir, 0, PGSIZE);
   if (P2V(PHYSTOP) > (void*)DEVSPACE)
     panic("PHYSTOP too high");
+  //将kmap里的各个内存段的物理地址和虚拟地址相互映射，保存在页目录里。
   for(k = kmap; k < &kmap[NELEM(kmap)]; k++)
     if(mappages(pgdir, k->virt, k->phys_end - k->phys_start,
                 (uint)k->phys_start, k->perm) < 0) {
